@@ -26,7 +26,7 @@ The original ZIP has been unpacked into `app/`, `mobile/`, `supabase/` and `docs
 
 The intended student experience is display name + class code, without student Supabase Auth accounts. Do not reuse `join_class` as-is: it requires an authenticated student profile.
 
-A reviewed incremental schema design is required for short-lived lesson identities and hashed, revocable join tokens. The Edge Function must validate the class code, active session, expiry, token binding and request rate before writing any readings. Keep the secret key server-side. Never ship it in the app.
+A per-lesson schema proposal is in `supabase/proposals/002_secure_per_lesson_students.sql`. The student endpoint source is in `supabase/functions/student-access/index.ts`; it validates the publishable key, class code, active session, token expiry/revocation and request rate before writing readings. Its gateway JWT verification is disabled because students have no Auth accounts; the function performs its own checks and uses the server-only `SUPABASE_SECRET_KEYS` value. Never ship that secret in the app.
 
 ## Known integrity fix to review
 
@@ -34,4 +34,4 @@ The current heart-rate INSERT policy contains a tautological session/class compa
 
 ## Deployment status
 
-No production migrations, Edge Functions, account provisioning or policy changes have been performed. The live project remains unchanged.
+The Edge Function and schema proposal are source files only. No production migrations, Edge Functions, account provisioning or policy changes have been deployed. The live project remains unchanged.
