@@ -118,15 +118,15 @@ Use 4–6 students first: at least one iPhone, one Android phone, one WHOOP, one
 
 ## v0.4 source package — integration and security review pending
 
-This release changes the student identity model. The teacher signs in with the existing Supabase Auth account. Students do **not** sign up, sign in, or create Supabase Auth users: they enter a display name and the class join code, then the client creates a random per-device participant token. The database stores only a SHA-256 hash of that token. Student readings are written through a rate-limited RPC into `participant_readings`; the teacher dashboard reads the participant roster and readings under teacher-only RLS policies.
+The target student identity is temporary and scoped to one active lesson. The teacher signs in with the single Supabase Auth account. Students do **not** sign up, sign in, or create Supabase Auth users: they enter a display name and class code, then the app creates a fresh random token for that lesson. The database stores only a SHA-256 hash. The `student-access` Edge Function validates join attempts and tokens, and uses a server-only database function to write readings into `participant_readings`; the teacher dashboard reads the roster and readings under teacher-only RLS policies.
 
 ### Upgrade an existing Supabase project
 
 1. Back up the project before changing its schema.
 2. Do not run the archived migration 003 directly. The connected live schema differs from the fresh-install schema and the anonymous participant token model needs hardening. Follow `docs/legacy-v04-review.md` and wait for a reviewed incremental migration.
 3. Confirm your existing teacher can still sign in and open the dashboard.
-4. Do not run the fresh-project `schema.sql` over an existing database. The migration is designed to preserve existing classes, sessions, profiles and historical readings.
-5. The database trigger permits a one-time first-teacher bootstrap only when no teacher profile exists. Create that user privately in the Supabase Dashboard before publishing, then disable public signups in Auth settings. Never expose a service-role key in either client.
+4. Do not run the fresh-project `schema.sql` over an existing database. The proposed incremental migration is designed to preserve existing classes, sessions, profiles and historical readings; test it against a disposable database first.
+5. The proposed database trigger permits a one-time first-teacher bootstrap only when no teacher profile exists. This is not active yet. Provision the teacher privately only after the reviewed migration is approved, and keep public signups disabled. Never expose a service-role key in either client.
 
 ### Website deployment
 
