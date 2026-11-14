@@ -8,7 +8,7 @@ Start with 4–6 volunteer users and a 10-minute session. Include both iOS and A
 
 - [ ] Teacher signs in and creates a class.
 - [ ] Teacher opens a named lesson and shares the join code.
-- [ ] Student accounts join using the code; unrelated accounts cannot see the class.
+- [ ] Students join using a display name and class code without creating Auth accounts; unrelated students cannot see each other's data.
 - [ ] WHOOP Heart Rate Broadcast is detected and gives stable readings.
 - [ ] Each Garmin model is checked against Garmin's supported broadcast list and tested individually.
 - [ ] Each chest strap is tested for standard BLE Heart Rate Service support.
