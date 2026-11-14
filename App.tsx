@@ -7,6 +7,7 @@ import { supabase, isSupabaseConfigured } from './src/lib/supabase';
 import { signInTeacher, signOutTeacher } from './src/services/teacherAuth';
 import { createTeacherClass, listTeacherClasses, type ClassRecord } from './src/services/classes';
 import { endLessonSession, getActiveLessonSession, startLessonSession, type LessonSession } from './src/services/sessions';
+import { listSessionReadings, removeReadingsSubscription, subscribeToSessionReadings, type HeartRateReading } from './src/services/readings';
 
 type Screen = 'home' | 'classes' | 'monitor' | 'join';
 
@@ -39,6 +40,7 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [classes, setClasses] = useState<ClassRecord[]>([]);
   const [activeSession, setActiveSession] = useState<LessonSession | null>(null);
+  const [readings, setReadings] = useState<HeartRateReading[]>([]);
 
   async function refreshClasses() {
     try {
@@ -82,6 +84,20 @@ export default function App() {
   }
 
   const activeClass = useMemo(() => classes[0], [classes]);
+  const averageHeartRate = useMemo(() => readings.length ? Math.round(readings.reduce((total, item) => total + item.bpm, 0) / readings.length) : '—', [readings]);
+  const connectedStudents = useMemo(() => new Set(readings.map(item => item.user_id)).size, [readings]);
+
+  useEffect(() => {
+    if (!activeSession?.id) { setReadings([]); return; }
+    let alive = true;
+    listSessionReadings(activeSession.id)
+      .then(rows => { if (alive) setReadings(rows); })
+      .catch(error => { if (alive) setNotice(error instanceof Error ? error.message : 'Could not load heart-rate readings.'); });
+    const channel = subscribeToSessionReadings(activeSession.id, reading => {
+      setReadings(current => [reading, ...current.filter(item => item.id !== reading.id)].slice(0, 500));
+    });
+    return () => { alive = false; void removeReadingsSubscription(channel); };
+  }, [activeSession?.id]);
 
   async function handleToggleSession() {
     if (!activeClass) { setNotice('Create a class before starting a lesson.'); return; }
@@ -199,7 +215,7 @@ export default function App() {
               <View style={styles.liveTop}><Pill tone={activeSession ? 'green' : 'amber'}>{activeSession ? 'IN PROGRESS' : 'NOT STARTED'}</Pill><Text style={styles.liveDate}>{activeSession ? 'LESSON ACTIVE' : 'READY TO START'}</Text></View>
               <Text style={styles.liveTitle}>{activeClass?.name ?? 'Choose a class'}</Text>
               <Text style={styles.liveDescription}>{activeSession ? `Started ${new Date(activeSession.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Session is saved to your class record.` : 'Start a lesson to create a session record for this class.'}</Text>
-              <View style={styles.liveStats}><View><Text style={styles.liveNumber}>—</Text><Text style={styles.liveLabel}>AVG. HEART RATE</Text></View><View><Text style={styles.liveNumber}>0</Text><Text style={styles.liveLabel}>CONNECTED</Text></View><View><Text style={styles.liveNumber}>—</Text><Text style={styles.liveLabel}>DURATION</Text></View></View>
+              <View style={styles.liveStats}><View><Text style={styles.liveNumber}>{averageHeartRate}</Text><Text style={styles.liveLabel}>AVG. BPM</Text></View><View><Text style={styles.liveNumber}>{connectedStudents}</Text><Text style={styles.liveLabel}>CONNECTED</Text></View><View><Text style={styles.liveNumber}>{readings.length}</Text><Text style={styles.liveLabel}>READINGS</Text></View></View>
               <TouchableOpacity style={styles.primaryButton} onPress={handleToggleSession} disabled={busy || !activeClass}><Text style={styles.primaryButtonText}>{busy ? 'Saving…' : activeSession ? 'End lesson and save' : 'Start lesson'}</Text></TouchableOpacity>
             </View>
             <View style={styles.infoCard}><Text style={styles.infoTitle}>Heart-rate monitoring</Text><Text style={styles.infoCopy}>The next build stage will connect validated student readings, class averages and live updates. No readings are being collected in this preview.</Text></View>
