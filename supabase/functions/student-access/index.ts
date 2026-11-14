@@ -167,6 +167,7 @@ Deno.serve(async (req: Request) => {
         return json(200, {
           token,
           participant_id: existing.id,
+          display_name: displayName,
           class_id: classRow.id,
           class_name: classRow.name,
           session,
@@ -190,6 +191,7 @@ Deno.serve(async (req: Request) => {
       return json(200, {
         token,
         participant_id: participant.id,
+        display_name: displayName,
         class_id: classRow.id,
         class_name: classRow.name,
         session,
@@ -212,6 +214,7 @@ Deno.serve(async (req: Request) => {
       if (updateError) throw updateError;
       return json(200, {
         participant_id: participant.id,
+        display_name: participant.display_name,
         class_id: participant.class_id,
         class_name: classRow.name,
         session,
