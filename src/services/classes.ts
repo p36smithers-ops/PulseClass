@@ -9,9 +9,13 @@ export type ClassRecord = {
 
 export async function listTeacherClasses(): Promise<ClassRecord[]> {
   if (!supabase) throw new Error('Supabase is not configured yet.');
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!authData.user) throw new Error('Please sign in again.');
   const { data, error } = await supabase
     .from('classes')
     .select('id, name, join_code, created_at')
+    .eq('teacher_id', authData.user.id)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data ?? [];
