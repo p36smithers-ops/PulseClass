@@ -20,7 +20,7 @@ PulseClass uses native Bluetooth LE on the student's phone and the Bluetooth SIG
 | Manufacturer cloud/API integration | May add selected brands or retrospective workout data | Requires vendor approval, user consent/OAuth, internet access and vendor-specific implementation; APIs may not provide continuous live HR |
 | ANT+ | Could support ANT+ sensors on devices with compatible radio hardware | No extra ANT+ receiver will be required for the core PulseClass experience; phones without ANT+ cannot receive ANT+ directly |
 
-WHOOP's developer documentation states that continuous heart-rate data is not available through its API; WHOOP devices instead support BLE heart-rate broadcast. Android Health Connect provides access to heart-rate records with user permission, but records may be synced or historical and should not be presented as a continuous live feed. See the official documentation linked from the project research notes in the repository issue tracker before implementing a vendor-specific integration.
+WHOOP's [developer documentation](https://developer.whoop.com/docs/developing/support/) states that continuous heart-rate data is not available through its API; WHOOP devices instead support BLE heart-rate broadcast. Android [Health Connect documentation](https://developer.android.com/health-and-fitness/health-connect/read-data) describes reading permissioned heart-rate records, but these may be synced or historical and should not be presented as a continuous live feed.
 
 ## WHOOP
 
