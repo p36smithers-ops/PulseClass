@@ -99,7 +99,7 @@ begin
     return false;
   end if;
 
-  perform pg_advisory_xact_lock(hashtext(p_ip_hash));
+  perform pg_advisory_xact_lock(hashtextextended(p_ip_hash, 0));
   select * into v
   from public.join_attempts
   where ip_hash = p_ip_hash
@@ -140,6 +140,68 @@ $function$;
 
 revoke all on function public.consume_join_attempt(text) from public, anon, authenticated;
 grant execute on function public.consume_join_attempt(text) to service_role;
+
+
+-- Serialize writes per participant so two concurrent requests cannot bypass
+-- the sampling interval or write after a lesson has ended.
+create or replace function public.record_lesson_reading(
+  p_participant_id uuid,
+  p_bpm smallint,
+  p_device_name text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare v public.lesson_participants%rowtype;
+begin
+  if p_bpm is null or p_bpm < 25 or p_bpm > 250 then
+    raise exception 'Heart rate must be between 25 and 250 BPM';
+  end if;
+
+  select * into v
+  from public.lesson_participants
+  where id = p_participant_id
+  for update;
+
+  if not found or v.revoked_at is not null or v.expires_at <= now() then
+    raise exception 'Participant token is expired or revoked';
+  end if;
+
+  if not exists (
+    select 1 from public.sessions
+    where id = v.session_id and class_id = v.class_id and ended_at is null
+  ) then
+    update public.lesson_participants
+      set revoked_at = now()
+      where id = v.id and revoked_at is null;
+    raise exception 'Lesson has ended';
+  end if;
+
+  if v.last_reading_at is not null
+     and v.last_reading_at > now() - interval '2500 milliseconds' then
+    raise exception 'Reading rate limit exceeded';
+  end if;
+
+  update public.lesson_participants
+    set last_reading_at = now(), last_seen_at = now()
+    where id = v.id;
+
+  insert into public.participant_readings(
+    participant_id, session_id, class_id, bpm, device_name, recorded_at
+  ) values (
+    v.id, v.session_id, v.class_id, p_bpm,
+    left(coalesce(nullif(btrim(p_device_name), ''), 'Bluetooth HR monitor'), 80),
+    now()
+  );
+end
+$function$;
+
+revoke all on function public.record_lesson_reading(uuid, smallint, text)
+  from public, anon, authenticated;
+grant execute on function public.record_lesson_reading(uuid, smallint, text)
+  to service_role;
 
 -- A lesson end invalidates every participant token for that lesson.
 create or replace function public.revoke_lesson_participants_on_end()
@@ -193,12 +255,15 @@ set search_path = public
 as $function$
 declare new_id uuid; code text;
 begin
-  if (select role from public.profiles where id = auth.uid()) <> 'teacher' then
+  if (select role from public.profiles where id = auth.uid()) is distinct from 'teacher' then
     raise exception 'Teacher account required';
   end if;
-  code := upper(encode(gen_random_bytes(6), 'hex'));
+  if p_name is null or char_length(btrim(p_name)) not between 1 and 80 then
+    raise exception 'Class name must be between 1 and 80 characters';
+  end if;
+  code := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12));
   insert into public.classes(name, join_code, teacher_id)
-    values (trim(p_name), code, auth.uid())
+    values (btrim(p_name), code, auth.uid())
     returning id into new_id;
   return new_id;
 end
@@ -228,6 +293,7 @@ $function$;
 -- executable by PUBLIC, and student join/reading requests go only through
 -- the Edge Function.
 revoke all on function public.handle_new_user() from public, anon, authenticated;
+revoke all on function public.revoke_lesson_participants_on_end() from public, anon, authenticated;
 revoke all on function public.create_class(text) from public, anon;
 revoke all on function public.join_class(text) from public, anon, authenticated;
 revoke all on function public.is_teacher_of_class(uuid, uuid) from public, anon;
