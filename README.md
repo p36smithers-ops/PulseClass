@@ -36,7 +36,7 @@ npx expo start --web
 
 ## Supabase setup
 
-Copy `.env.example` to `.env` and add the project URL and **publishable/anon client key**.
+Copy `.env.example` to `.env` and add the project URL and **publishable client key**.
 
 Never put a Supabase service-role key or database password in this app. Privileged operations will be handled server-side.
 
