@@ -10,7 +10,7 @@ PulseClass is structured as a **single-teacher web dashboard + anonymous student
 - `mobile/`: Expo / React Native student app for iOS and Android, using native Bluetooth LE rather than Web Bluetooth.
 - `supabase/schema.sql`: fresh-install database schema, authentication, roles, class codes, lessons, heart-rate readings and row-level security.
 - `supabase/migrations/002_native_student_app.sql`: earlier native-app migration.
-- `supabase/migrations/003_single_teacher_anonymous_students.sql`: v0.4 migration that disables public account creation and moves students to anonymous class participants.
+- `supabase/migrations/003_single_teacher_anonymous_students.sql`: archived v0.4 migration draft. It is **not approved for direct application**; see `docs/legacy-v04-review.md`.
 - `docs/`: deployment, device compatibility and pilot acceptance guidance.
 
 ## Recommended classroom architecture
@@ -45,10 +45,10 @@ Web Bluetooth is not available in iOS Safari and browser support is not universa
 ### A. Set up Supabase
 
 1. Create a Supabase project in a region approved by the school. For an Irish school, discuss EU data residency with the school's data-protection lead before selecting the region.
-2. For a **new project**, run `supabase/schema.sql`, then run `supabase/migrations/003_single_teacher_anonymous_students.sql`.
-3. For the existing PulseClass starter project, run `supabase/migrations/002_native_student_app.sql` only if it has not already been applied, then run `supabase/migrations/003_single_teacher_anonymous_students.sql`. Do not run the full create-table schema over an already-created database.
+2. Treat `supabase/schema.sql` as a fresh-install reference only. Do not run it against the connected PulseClass project.
+3. Do **not** apply migrations 002 or 003 to the connected project yet. The archived 003 migration expects session columns that are missing from the live schema, and its anonymous-student token model needs expiry, revocation and join-rate limiting. See `docs/legacy-v04-review.md`.
 4. In Database → Publications, confirm `participant_readings` is included in `supabase_realtime` (the migration attempts to add it automatically).
-5. Keep email/password sign-in enabled for your existing teacher account. Migration 003 allows a one-time bootstrap: if no teacher profile exists, the first Auth user created in the private Supabase Dashboard becomes the teacher. Once that profile exists, all later signups are rejected by the database trigger. Immediately disable public signups in Supabase Auth settings after creating the owner.
+5. The connected project currently has no Auth users. Provision the single teacher account only after the reviewed migration and account-bootstrap plan are ready. Do not enable public signups.
 6. Keep the Supabase service-role key private. The web app and mobile app use only the public anon/publishable key with RLS enabled.
 7. Confirm the single owner teacher profile with this read-only query:
 
@@ -74,7 +74,7 @@ Requirements: Node.js LTS, an Apple Developer account for iOS device distributio
 
    ```env
    EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY
+   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLIC_PUBLISHABLE_KEY
    ```
 
 3. Install dependencies: `npm install`.
@@ -116,14 +116,14 @@ Use 4–6 students first: at least one iPhone, one Android phone, one WHOOP, one
 - **Readings stop:** keep app foregrounded, screen awake, Bluetooth enabled and network connected. Reconnect the sensor and check the teacher dashboard's last-reading status.
 - **Teacher sees stale student:** check the student's app status, phone internet and active lesson. Stale readings should not be interpreted as zero HR.
 
-## v0.4 single-teacher / anonymous-student release
+## v0.4 source package — integration and security review pending
 
 This release changes the student identity model. The teacher signs in with the existing Supabase Auth account. Students do **not** sign up, sign in, or create Supabase Auth users: they enter a display name and the class join code, then the client creates a random per-device participant token. The database stores only a SHA-256 hash of that token. Student readings are written through a rate-limited RPC into `participant_readings`; the teacher dashboard reads the participant roster and readings under teacher-only RLS policies.
 
 ### Upgrade an existing Supabase project
 
 1. Back up the project before changing its schema.
-2. In Supabase SQL Editor, run `supabase/migrations/003_single_teacher_anonymous_students.sql` **after** the earlier schema and migration files.
+2. Do not run the archived migration 003 directly. The connected live schema differs from the fresh-install schema and the anonymous participant token model needs hardening. Follow `docs/legacy-v04-review.md` and wait for a reviewed incremental migration.
 3. Confirm your existing teacher can still sign in and open the dashboard.
 4. Do not run the fresh-project `schema.sql` over an existing database. The migration is designed to preserve existing classes, sessions, profiles and historical readings.
 5. The database trigger permits a one-time first-teacher bootstrap only when no teacher profile exists. Create that user privately in the Supabase Dashboard before publishing, then disable public signups in Auth settings. Never expose a service-role key in either client.
@@ -142,7 +142,7 @@ Host the contents of `app/` as a static site on an HTTPS host (for example, Netl
 
 ### Important limitations and data protection
 
-- The student participant token is a bearer credential stored on the student's device. Do not share it. Clearing app data removes the local token; the student can join again with their name and class code.
+- The student participant token is a bearer credential stored using device secure storage in the native app and session storage in the browser fallback. Do not share it. Server-side expiry and revocation still need to be implemented before real student data is collected.
 - Students can join any class if they know its code. Treat class codes as private and rotate/recreate classes if a code is shared beyond the class.
 - Existing student Auth users and legacy membership/readings are not deleted by this migration. They are retained to avoid destructive data loss; new student participation uses the anonymous participant tables. Delete legacy accounts/data only after reviewing retention obligations and explicitly approving that cleanup.
 - Native BLE collection is foreground-only. The app has not been tested with physical WHOOP/Garmin/chest-strap hardware or in a live classroom. Conduct a supervised pilot before relying on it.
