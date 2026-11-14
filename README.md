@@ -103,7 +103,7 @@ Use 4–6 students first: at least one iPhone, one Android phone, one WHOOP, one
 
 ## Measurement notes
 
-- HRmax currently uses the estimate `208 − 0.7 × age` and five broad zones. This is not an individually measured maximum and should not be used as a medical threshold.
+- HRmax currently uses the estimate `208 − 0.7 × age` with a generic age-16 reference for all anonymous participants and five broad zones. This is not individualized or an individually measured maximum; do not use it for assessment, medical decisions or exercise-safety decisions.
 - Readings are sampled to the database about every three seconds. Time-in-zone is estimated between adjacent readings and long gaps are excluded. It is not exact physiological time in zone.
 - The mobile app is foreground-only in this release. Screen-awake support is enabled while connected. Do not promise collection after the student backgrounds or force-quits the app.
 - If a phone loses internet, readings are not guaranteed to be uploaded later. A live lesson requires a working network path from each student phone to Supabase.
