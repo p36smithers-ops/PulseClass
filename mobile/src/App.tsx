@@ -3,7 +3,8 @@ import { Alert, AppState, PermissionsAndroid, Platform, SafeAreaView, ScrollView
 import 'react-native-url-polyfill/auto';
 import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
-import { BleManager, Device, Subscription } from 'react-native-ble-plx';
+import { BleManager } from 'react-native-ble-plx';
+import type { Device, Subscription } from 'react-native-ble-plx';
 import { toByteArray } from 'base64-js';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Crypto from 'expo-crypto';
@@ -15,7 +16,7 @@ const HR_MEASUREMENT = '00002a37-0000-1000-8000-00805f9b34fb';
 const TOKEN_KEY = 'pulseclass.anonymous.participant.v1';
 const manager = new BleManager();
 const supabase = SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY ? createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }) : null;
-function decodeBpm(value: string) { const b = toByteArray(value); if (b.length < 2) throw new Error('Invalid heart-rate packet'); return (b[0] & 1) ? (b[1] | (b[2] << 8)) : b[1]; }
+function decodeBpm(value: string) { const b = toByteArray(value); const is16Bit = (b[0] & 1) === 1; if (b.length < (is16Bit ? 3 : 2)) throw new Error('Invalid heart-rate packet'); return is16Bit ? (b[1] | (b[2] << 8)) : b[1]; }
 function zoneFor(bpm: number) { const p = bpm / (208 - .7 * 16); return p < .6 ? 1 : p < .7 ? 2 : p < .8 ? 3 : p < .9 ? 4 : 5; }
 async function makeToken() { const bytes = await Crypto.getRandomBytesAsync(32); return Array.from(bytes).map(x=>x.toString(16).padStart(2,'0')).join(''); }
 
