@@ -235,26 +235,22 @@ Deno.serve(async (req: Request) => {
         return json(410, { error: "This lesson has ended. Join again for your next lesson." });
       }
 
-      const nowMs = Date.now();
-      if (participant.last_reading_at && nowMs - Date.parse(participant.last_reading_at) < 2500) {
-        return json(429, { error: "Reading rate is too high." });
-      }
-      const now = new Date(nowMs).toISOString();
-      const { error: updateError } = await admin
-        .from("lesson_participants")
-        .update({ last_reading_at: now, last_seen_at: now })
-        .eq("id", participant.id);
-      if (updateError) throw updateError;
-
-      const { error: insertError } = await admin.from("participant_readings").insert({
-        participant_id: participant.id,
-        session_id: session.id,
-        class_id: participant.class_id,
-        bpm: bpm as number,
-        device_name: deviceName || "Bluetooth HR monitor",
-        recorded_at: now,
+      const { error: recordError } = await admin.rpc("record_lesson_reading", {
+        p_participant_id: participant.id,
+        p_bpm: bpm as number,
+        p_device_name: deviceName || "Bluetooth HR monitor",
       });
-      if (insertError) throw insertError;
+      if (recordError) {
+        if (recordError.message.toLowerCase().includes("rate limit")) {
+          return json(429, { error: "Reading rate is too high." });
+        }
+        if (recordError.message.toLowerCase().includes("ended") ||
+            recordError.message.toLowerCase().includes("expired") ||
+            recordError.message.toLowerCase().includes("revoked")) {
+          return json(410, { error: "This lesson has ended. Join again for your next lesson." });
+        }
+        throw recordError;
+      }
       return json(200, { accepted: true });
     }
 
