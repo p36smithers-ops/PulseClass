@@ -10,7 +10,8 @@
 
 ## Implemented in this scaffold
 
-- Expo / React Native TypeScript application shell.
+- Recovered v0.4 teacher website (`app/index.html`) and native BLE student app (`mobile/`).
+- Expo / React Native TypeScript prototype scaffold at the repository root.
 - Teacher sign-in screen using Supabase Auth.
 - Mobile session persistence through Expo SecureStore.
 - Teacher class listing scoped to the signed-in teacher.
@@ -24,7 +25,7 @@
 1. Recover and review the earlier v0.4 project archive. It is retained in the repository; do not overwrite or discard it.
 2. Verify package versions, compile and run the Expo app.
 3. Review the existing live schema and the archived SQL migrations side by side. Do not replay archived migrations on the connected database without a drift review.
-4. Design a separate temporary-student identity model. The existing `class_memberships` table references `profiles`, which references `auth.users`; it cannot directly represent students without Auth accounts.
+4. Replace the archived class-level participant model with a per-lesson temporary-student identity model. The existing `class_memberships` table references `profiles`, which references `auth.users`; it cannot directly represent students without Auth accounts.
 5. Add a rate-limited server-side student join endpoint. Store only hashed, random, expiring/revocable tokens; bind them to a class and active lesson.
 6. Add a server-side heart-rate write endpoint that validates the token, session, class, BPM range and timestamp.
 7. Add real-time teacher monitoring and session summaries.
