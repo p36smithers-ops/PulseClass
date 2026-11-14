@@ -17,7 +17,9 @@
 - Teacher class listing scoped to the signed-in teacher.
 - Class creation through the existing `create_class(p_name)` database function.
 - Start and end lesson sessions through the existing `sessions` table.
-- Student name + class-code interface (visual preview only).
+- Student name + class-code interface wired to the secure `student-access` Edge Function source.
+- Native student bearer token stored with Expo SecureStore; browser fallback token stored in sessionStorage.
+- Per-lesson participant schema and rate-limit proposal; not yet applied.
 - GitHub Actions TypeScript validation workflow.
 
 ## Next engineering stages
@@ -26,8 +28,8 @@
 2. Verify package versions, compile and run the Expo app.
 3. Review the existing live schema and the archived SQL migrations side by side. Do not replay archived migrations on the connected database without a drift review.
 4. Replace the archived class-level participant model with a per-lesson temporary-student identity model. The existing `class_memberships` table references `profiles`, which references `auth.users`; it cannot directly represent students without Auth accounts.
-5. Add a rate-limited server-side student join endpoint. Store only hashed, random, expiring/revocable tokens; bind them to a class and active lesson.
-6. Add a server-side heart-rate write endpoint that validates the token, session, class, BPM range and timestamp.
+5. Test and review the new `student-access` Edge Function and `002_secure_per_lesson_students.sql` proposal against a disposable database; only then deploy/apply with explicit approval.
+6. The Edge Function source now validates the token, session, class, BPM range and sampling interval; verify it end-to-end after deployment.
 7. Add real-time teacher monitoring and session summaries.
 8. Test with synthetic readings and a small classroom pilot before collecting real student data.
 
