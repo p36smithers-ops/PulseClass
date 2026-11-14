@@ -19,7 +19,7 @@ Start with 4–6 volunteer users and a 10-minute session. Include both iOS and A
 - [ ] Average, peak and zone distribution update during the lesson.
 - [ ] Ending a lesson stops further accepted readings.
 - [ ] Session report and CSV export work.
-- [ ] RLS is tested using a second unrelated student and a second teacher.
+- [ ] Two unrelated student tokens cannot see or alter each other's data; a second teacher cannot see the class.
 - [ ] The school's data-protection lead signs off on purpose, access, retention, deletion and consent / notice.
 
 ## Scale-up test
