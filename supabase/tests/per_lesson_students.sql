@@ -43,7 +43,7 @@ select public.record_lesson_reading(
 );
 do $$
 begin
-  if (select count(*) from public.participant_readings) <> 1 then
+  if (select count(id) from public.participant_readings) <> 1 then
     raise exception 'Expected exactly one participant reading';
   end if;
   if not exists (
@@ -78,7 +78,7 @@ set role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', false);
 do $$
 begin
-  if (select count(*) from public.lesson_participants) <> 1 then
+  if (select count(id) from public.lesson_participants) <> 1 then
     raise exception 'Teacher should see the lesson participant';
   end if;
   if (select count(*) from public.participant_readings) <> 1 then
@@ -88,10 +88,10 @@ end $$;
 select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', false);
 do $$
 begin
-  if (select count(*) from public.lesson_participants) <> 0 then
+  if (select count(id) from public.lesson_participants) <> 0 then
     raise exception 'Unrelated user must not see lesson participants';
   end if;
-  if (select count(*) from public.participant_readings) <> 0 then
+  if (select count(id) from public.participant_readings) <> 0 then
     raise exception 'Unrelated user must not see participant readings';
   end if;
 end $$;
