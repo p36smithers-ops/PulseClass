@@ -34,7 +34,8 @@
           ],
           "bluetoothAlwaysPermission": "PulseClass uses Bluetooth to connect to your heart-rate monitor during a lesson."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {}
