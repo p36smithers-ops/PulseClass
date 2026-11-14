@@ -75,8 +75,9 @@ create index participant_readings_session_time_idx
 create index participant_readings_participant_time_idx
   on public.participant_readings (participant_id, recorded_at desc);
 
--- Rate-limit join-code attempts using an HMAC of the client IP. The raw IP is
--- never stored. Only the server-side Edge Function may call this function.
+-- Rate-limit join-code attempts to 100 per IP per 10-minute window. This
+-- leaves room for a class of 20–30 students behind one school NAT. The raw IP
+-- is never stored; only the server-side Edge Function calls this function.
 create table public.join_attempts (
   ip_hash text primary key check (ip_hash ~ '^[a-f0-9]{64}$'),
   window_started_at timestamptz not null default now(),
@@ -123,7 +124,7 @@ begin
     return true;
   end if;
 
-  if v.attempt_count >= 9 then
+  if v.attempt_count >= 99 then
     update public.join_attempts
       set attempt_count = attempt_count + 1,
           blocked_until = now() + interval '15 minutes'
