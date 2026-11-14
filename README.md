@@ -28,14 +28,14 @@ For 20–30 students this is a modest workload: approximately 7–10 readings/se
 
 ## Device support strategy
 
-PulseClass does not depend on brand-specific cloud APIs for live HR. It listens for the standard Bluetooth LE Heart Rate Service, which avoids the delay and account/API limitations of cloud-sync integrations.
+PulseClass prioritises a direct, local Bluetooth LE connection for live heart rate. The student app scans nearby Bluetooth devices and verifies the standard Bluetooth SIG Heart Rate Service (GATT `180D`) and Heart Rate Measurement characteristic (`2A37`) after connection. This broadens discovery beyond devices that advertise the service UUID, while still requiring the device to expose the standard service.
 
-- **WHOOP:** student enables Heart Rate Broadcast in WHOOP Device Settings, then pairs the broadcast from PulseClass. WHOOP's support material documents this broadcast feature. If the band is already streaming to another receiver, disconnect that receiver and retry.
-- **Garmin watches:** only models with Bluetooth Broadcast Heart Rate are supported. The student must enable Broadcast Heart Rate on the watch before scanning. Check Garmin's current compatibility list and the specific watch manual; not every Garmin model broadcasts over Bluetooth.
-- **Chest straps:** Polar, Wahoo, Garmin and other straps should work if they expose the standard BLE Heart Rate Service. ANT+-only devices and proprietary-only sensors will not work through this BLE route.
-- **Unknown / mixed devices:** ask the student to enable broadcast mode and run the in-app scan. A device that does not advertise the standard service cannot be assumed compatible. Record the exact make/model during the pilot.
-- **Apple Watch:** not supported as a direct BLE heart-rate peripheral in this build. It requires a separate iOS HealthKit companion workflow and should be treated as a later integration, not promised for this pilot.
-- **Fitbit:** not included in the direct BLE compatibility promise. Specific models and broadcast support vary; do not assume compatibility without a device-level test.
+- **WHOOP:** enable Heart Rate Broadcast in WHOOP Device Settings. WHOOP's developer documentation says continuous heart-rate data is not available through its cloud API, so BLE broadcast is the preferred live route.
+- **Garmin watches:** support is model-specific. Only models that expose Bluetooth Broadcast Heart Rate can connect directly. ANT+-only broadcast (including the vívoactive 4's broadcast mode) cannot be received by a phone without ANT+ radio support.
+- **Chest straps:** Polar, Wahoo, Garmin and other straps are candidates when they expose the standard BLE Heart Rate Service. Exact models and simultaneous-connection limits must be tested.
+- **Apple Watch / Fitbit / Samsung Galaxy Watch / other proprietary ecosystems:** do not promise direct BLE support unless the exact model exposes the standard HR service. Consider official phone health-platform or vendor integrations where permitted, but these may provide delayed workout/history data rather than continuous live readings.
+- **Android Health Connect:** a possible later route for permissioned heart-rate records from compatible apps. It is not a replacement for live BLE streaming and must not be represented as live classroom telemetry.
+- **No-purchase policy:** the core student workflow must not require students or the school to buy an ANT+ receiver, new wearable, or paid vendor subscription. Students without a compatible wearable must still be able to participate.
 
 ### Why the native student app matters
 
