@@ -25,6 +25,12 @@ jobs:
       - name: TypeScript check
         working-directory: mobile
         run: npm run typecheck
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check student Edge Function
+        run: deno check supabase/functions/student-access/index.ts
       - name: Commit generated dependency lockfile
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
