@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install dependencies
+      - name: Install mobile dependencies
+        working-directory: mobile
         run: npm install
       - name: TypeScript check
+        working-directory: mobile
         run: npm run typecheck
