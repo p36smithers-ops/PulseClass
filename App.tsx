@@ -1,8 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput,
-  TouchableOpacity, View, Platform
+  TouchableOpacity, View, Platform, ActivityIndicator
 } from 'react-native';
+import { supabase, isSupabaseConfigured } from './src/lib/supabase';
+import { signInTeacher, signOutTeacher } from './src/services/teacherAuth';
+import { createTeacherClass, listTeacherClasses, type ClassRecord } from './src/services/classes';
 
 type Screen = 'home' | 'classes' | 'monitor' | 'join';
 
@@ -24,25 +27,70 @@ function Metric({ label, value, note }: { label: string; value: string; note: st
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
+  const [teacherReady, setTeacherReady] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
   const [className, setClassName] = useState('');
   const [studentName, setStudentName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [notice, setNotice] = useState('');
-  const [classes, setClasses] = useState([
-    { id: '1', name: 'Year 10 Biology', students: 24, code: 'BIO10A' },
-    { id: '2', name: 'Sports Science 1', students: 18, code: 'SPORT1' },
-    { id: '3', name: 'Year 12 PE', students: 21, code: 'PE12B' }
-  ]);
+  const [classes, setClasses] = useState<ClassRecord[]>([]);
+
+  async function refreshClasses() {
+    try {
+      const rows = await listTeacherClasses();
+      setClasses(rows);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not load your classes.');
+    }
+  }
+
+  useEffect(() => {
+    if (!supabase) { setAuthLoading(false); return; }
+    let alive = true;
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!alive) return;
+      const session = data.session;
+      setTeacherReady(Boolean(session));
+      if (session) await refreshClasses();
+      if (alive) setAuthLoading(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setTeacherReady(Boolean(session));
+      if (session) void refreshClasses();
+      else setClasses([]);
+    });
+    return () => { alive = false; listener.subscription.unsubscribe(); };
+  }, []);
+
+  async function handleSignIn() {
+    setBusy(true); setNotice('');
+    try {
+      await signInTeacher(email, password);
+      setPassword('');
+      setTeacherReady(true);
+      await refreshClasses();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Sign in failed.');
+    } finally { setBusy(false); }
+  }
 
   const activeClass = useMemo(() => classes[0], [classes]);
 
-  function addClass() {
+  async function addClass() {
     const name = className.trim();
     if (!name) { setNotice('Enter a class name first.'); return; }
-    const code = Math.random().toString(36).slice(2, 8).toUpperCase();
-    setClasses(current => [...current, { id: String(Date.now()), name, students: 0, code }]);
-    setClassName('');
-    setNotice('Class added to this preview. Connect Supabase to save it permanently.');
+    setBusy(true); setNotice('');
+    try {
+      await createTeacherClass(name);
+      setClassName('');
+      await refreshClasses();
+      setNotice('Class saved successfully.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not create class.');
+    } finally { setBusy(false); }
   }
 
   function joinLesson() {
@@ -68,10 +116,11 @@ export default function App() {
             <View style={styles.brandMark}><Text style={styles.brandMarkText}>P</Text></View>
             <View><Text style={styles.brandName}>PulseClass</Text><Text style={styles.brandSub}>TEACH • MOVE • LEARN</Text></View>
           </TouchableOpacity>
-          <View style={styles.teacherAvatar}><Text style={styles.teacherAvatarText}>T</Text></View>
+          {teacherReady && <TouchableOpacity style={styles.teacherAvatar} onPress={async () => { await signOutTeacher(); setTeacherReady(false); setNotice('Signed out.'); }}><Text style={styles.teacherAvatarText}>↗</Text></TouchableOpacity>}
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {authLoading ? <View style={styles.authCard}><ActivityIndicator color={palette.green} /><Text style={styles.authHelp}>Checking your secure teacher session…</Text></View> : !isSupabaseConfigured ? <View style={styles.authCard}><Text style={styles.eyebrow}>SETUP REQUIRED</Text><Text style={styles.heading}>Connect PulseClass.</Text><Text style={styles.subheading}>The app screens are ready, but the Supabase project URL and publishable key still need to be added to the app environment before sign-in can work.</Text></View> : !teacherReady ? <View style={styles.authCard}><View style={styles.joinMark}><Text style={styles.joinMarkText}>♥</Text></View><Text style={styles.eyebrow}>TEACHER ACCESS</Text><Text style={styles.heading}>Welcome back.</Text><Text style={styles.subheading}>Sign in with your teacher account to manage classes and lessons.</Text><Text style={styles.fieldLabel}>EMAIL ADDRESS</Text><TextInput value={email} onChangeText={setEmail} placeholder="Teacher email" placeholderTextColor="#9AA69F" style={styles.input} autoCapitalize="none" keyboardType="email-address" /><Text style={styles.fieldLabel}>PASSWORD</Text><TextInput value={password} onChangeText={setPassword} placeholder="Password" placeholderTextColor="#9AA69F" style={styles.input} secureTextEntry /><TouchableOpacity style={styles.primaryButton} onPress={handleSignIn} disabled={busy}><Text style={styles.primaryButtonText}>{busy ? 'Signing in…' : 'Sign in securely  →'}</Text></TouchableOpacity><Text style={styles.privacyNote}>Student accounts are not needed. The teacher account is created separately in Supabase.</Text></View> : <>
           {screen === 'home' && <>
             <Text style={styles.eyebrow}>TEACHER WORKSPACE</Text>
             <Text style={styles.heading}>Good to see you.</Text>
@@ -96,7 +145,7 @@ export default function App() {
             <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Your classes</Text><TouchableOpacity onPress={() => setScreen('classes')}><Text style={styles.link}>View all →</Text></TouchableOpacity></View>
             {classes.slice(0, 3).map((item, index) => <TouchableOpacity key={item.id} style={styles.classRow} onPress={() => { setScreen('monitor'); setNotice(''); }}>
               <View style={[styles.classIcon, { backgroundColor: index % 2 ? '#EEF1FA' : palette.mint }]}><Text style={styles.classIconText}>{index === 0 ? '⌬' : index === 1 ? '◉' : '▤'}</Text></View>
-              <View style={{ flex: 1 }}><Text style={styles.className}>{item.name}</Text><Text style={styles.classMeta}>{item.students} students · Code {item.code}</Text></View>
+              <View style={{ flex: 1 }}><Text style={styles.className}>{item.name}</Text><Text style={styles.classMeta}>Join code {item.join_code}</Text></View>
               <Text style={styles.chevron}>›</Text>
             </TouchableOpacity>)}
             <TouchableOpacity style={styles.studentEntry} onPress={() => { setScreen('join'); setNotice(''); }}>
@@ -115,9 +164,9 @@ export default function App() {
             </View>
             <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>All classes</Text><Pill>{classes.length} groups</Pill></View>
             {classes.map(item => <View key={item.id} style={styles.classCard}>
-              <View style={styles.classCardTop}><View style={styles.classIcon}><Text style={styles.classIconText}>▦</Text></View><Pill>{item.students} students</Pill></View>
+              <View style={styles.classCardTop}><View style={styles.classIcon}><Text style={styles.classIconText}>▦</Text></View><Pill>Created</Pill></View>
               <Text style={styles.className}>{item.name}</Text><Text style={styles.classMeta}>Class join code</Text>
-              <View style={styles.codeBox}><Text style={styles.codeText}>{item.code}</Text></View>
+              <View style={styles.codeBox}><Text style={styles.codeText}>{item.join_code}</Text></View>
             </View>)}
           </>}
 
@@ -151,9 +200,10 @@ export default function App() {
 
           {!!notice && <View style={styles.notice}><Text style={styles.noticeText}>{notice}</Text></View>}
           <Text style={styles.footer}>PULSECLASS  •  EARLY BUILD  •  YOUR DATA STAYS YOURS</Text>
+          </>}
         </ScrollView>
 
-        <View style={styles.tabbar}>
+        {teacherReady && <View style={styles.tabbar}>
           {navItems.map(item => <TouchableOpacity key={item.id} onPress={() => { setScreen(item.id); setNotice(''); }} style={styles.tab}>
             <Text style={[styles.tabIcon, screen === item.id && styles.tabActive]}>{item.icon}</Text>
             <Text style={[styles.tabLabel, screen === item.id && styles.tabActive]}>{item.label}</Text>
@@ -161,7 +211,7 @@ export default function App() {
           <TouchableOpacity onPress={() => { setScreen('join'); setNotice(''); }} style={styles.tab}>
             <Text style={[styles.tabIcon, screen === 'join' && styles.tabActive]}>＋</Text><Text style={[styles.tabLabel, screen === 'join' && styles.tabActive]}>Join</Text>
           </TouchableOpacity>
-        </View>
+        </View>}
       </View>
     </SafeAreaView>
   );
@@ -231,6 +281,8 @@ const styles = StyleSheet.create({
   infoTitle: { color: palette.green, fontSize: 13, fontWeight: '800' },
   infoCopy: { color: '#527064', fontSize: 11, lineHeight: 17, marginTop: 6 },
   joinCard: { backgroundColor: palette.white, borderRadius: 20, borderWidth: 1, borderColor: palette.line, padding: 20 },
+  authCard: { backgroundColor: palette.white, borderRadius: 22, borderWidth: 1, borderColor: palette.line, padding: 22, marginTop: 20 },
+  authHelp: { color: palette.muted, fontSize: 12, textAlign: 'center', marginTop: 12 },
   joinMark: { width: 48, height: 48, borderRadius: 16, backgroundColor: palette.mint, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   joinMarkText: { color: palette.green, fontSize: 25 },
   fieldLabel: { color: palette.muted, fontSize: 9, fontWeight: '800', letterSpacing: 1, marginBottom: 7, marginTop: 5 },
