@@ -35,3 +35,17 @@ export async function endLessonSession(sessionId: string): Promise<void> {
     .is('ended_at', null);
   if (error) throw error;
 }
+
+export async function getActiveLessonSession(classId: string): Promise<LessonSession | null> {
+  if (!supabase) throw new Error('Supabase is not configured yet.');
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('id, class_id, started_at, ended_at')
+    .eq('class_id', classId)
+    .is('ended_at', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
