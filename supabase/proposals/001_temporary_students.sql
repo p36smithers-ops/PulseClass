@@ -27,14 +27,14 @@ create table public.lesson_participants (
 );
 
 create index lesson_participants_session_idx
-  on private.lesson_participants (session_id);
+  on public.lesson_participants (session_id);
 create index lesson_participants_active_expiry_idx
-  on private.lesson_participants (expires_at)
+  on public.lesson_participants (expires_at)
   where revoked_at is null;
 
-alter table private.lesson_participants enable row level security;
-revoke all on table private.lesson_participants from public, anon, authenticated;
-grant select, insert, update, delete on table private.lesson_participants to service_role;
+alter table public.lesson_participants enable row level security;
+revoke all on table public.lesson_participants from public, anon, authenticated;
+grant select, insert, update, delete on table public.lesson_participants to service_role;
 
 -- Preserve existing authenticated-student rows while supporting temporary
 -- students who have no auth.users/profiles row.
@@ -51,7 +51,7 @@ alter table public.heart_rate_readings
 alter table public.heart_rate_readings
   add constraint heart_rate_readings_participant_session_class_fkey
   foreign key (participant_id, session_id, class_id)
-  references private.lesson_participants (id, session_id, class_id)
+  references public.lesson_participants (id, session_id, class_id)
   on delete cascade;
 
 create index heart_rate_readings_participant_idx
