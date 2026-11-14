@@ -4,7 +4,7 @@
 - [ ] Schema applied and RLS tested with teacher and anonymous participant flows
 - [ ] Only the owner teacher profile retained; public signup blocked
 - [ ] Email confirmation, password reset, SMTP, and account recovery configured
-- [ ] Class-code expiry/rotation and membership removal implemented
+- [ ] Join-attempt rate limiting, secure class-code generation and session-scoped token expiry/revocation implemented
 - [ ] Realtime publication verified for teacher dashboard reading anonymous participant data
 - [ ] Retention schedule and deletion workflow implemented
 - [ ] School privacy review / DPIA and consent or other lawful-basis process completed
@@ -36,4 +36,4 @@
 - [ ] Test device discovery in a room containing multiple simultaneous HR broadcasts; verify students manually select their own sensor by device name / ID.
 - [ ] Test WHOOP, each actual Garmin model, and each actual strap model separately.
 - [ ] Run a 20–30 phone, 20-minute Wi-Fi load test before normal lessons.
-- [ ] Verify no reading is accepted after a lesson ends and the database sampling trigger rejects excessive writes.
+- [ ] Verify no reading is accepted after a lesson ends and the server-side write guard rejects excessive writes.
