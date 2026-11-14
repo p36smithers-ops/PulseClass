@@ -17,13 +17,13 @@ PulseClass is structured as a **single-teacher web dashboard + anonymous student
 
 1. Teacher uses the web dashboard on a laptop connected to the school network.
 2. Teacher opens a lesson and shares its class code.
-3. Each student opens the student app on their iPhone or Android phone, enters their name and class code (no signup or login), and connects one heart-rate device.
+3. Each student opens the student app on their iPhone or Android phone, enters their name and class code (no signup or login), and receives a short-lived per-lesson token from the `student-access` Edge Function.
 4. The mobile app reads the standard Bluetooth LE Heart Rate Service (GATT service `180D`, measurement characteristic `2A37`) using native Bluetooth APIs.
-5. Each student phone writes a reading to Supabase approximately every three seconds while a lesson is active.
+5. Each student phone sends readings through the `student-access` Edge Function approximately every three seconds while a lesson is active; the function validates the participant token and active session before inserting a reading.
 6. Supabase Postgres stores the readings; Supabase Realtime sends inserts to the teacher's class dashboard.
 7. Teacher ends the lesson and reviews the stored report.
 
-For 20–30 students this is a modest workload: approximately 7–10 readings/second across the class at the configured sampling interval, with one or a small number of teacher dashboards subscribed. The existing Postgres Changes approach is suitable for this initial scale; benchmark it with the school's actual Wi-Fi and account plan before increasing the class size. Supabase recommends Broadcast for much larger fan-out workloads.
+For 20–30 students this is a modest workload: approximately 7–10 readings/second across the class at the configured sampling interval, with one or a small number of teacher dashboards subscribed. The proposed Postgres Changes approach is suitable for this initial scale; benchmark it with the school's actual Wi-Fi and account plan before increasing the class size. Supabase recommends Broadcast for much larger fan-out workloads.
 
 ## Device support strategy
 
@@ -47,7 +47,7 @@ Web Bluetooth is not available in iOS Safari and browser support is not universa
 1. Create a Supabase project in a region approved by the school. For an Irish school, discuss EU data residency with the school's data-protection lead before selecting the region.
 2. Treat `supabase/schema.sql` as a fresh-install reference only. Do not run it against the connected PulseClass project.
 3. Do **not** apply migrations 002 or 003 to the connected project yet. The archived 003 migration expects session columns that are missing from the live schema, and its anonymous-student token model needs expiry, revocation and join-rate limiting. See `docs/legacy-v04-review.md`.
-4. In Database → Publications, confirm `participant_readings` is included in `supabase_realtime` (the migration attempts to add it automatically).
+4. The reviewed schema proposal adds `participant_readings` to `supabase_realtime`. Confirm publication membership after the migration is approved and applied.
 5. The connected project currently has no Auth users. Provision the single teacher account only after the reviewed migration and account-bootstrap plan are ready. Do not enable public signups.
 6. Keep the Supabase service-role key private. The web app and mobile app use only the public anon/publishable key with RLS enabled.
 7. Confirm the single owner teacher profile with this read-only query:
