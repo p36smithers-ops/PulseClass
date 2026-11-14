@@ -27,7 +27,7 @@
 
 ## Mixed-device mobile rollout (v0.4)
 
-- [ ] Apply `supabase/migrations/003_single_teacher_anonymous_students.sql` after the base schema / earlier migration.
+- [ ] Replace the archived migration 003 with a reviewed, tested incremental migration matching the live database; do not apply the archived draft directly.
 - [ ] Verify the first owner account is the only teacher; subsequent signup attempts are rejected and public signup is disabled in Auth settings.
 - [ ] Verify students join with name + code and no Auth user/profile is created.
 - [ ] Configure `mobile/.env` with the Supabase project URL and public key.
