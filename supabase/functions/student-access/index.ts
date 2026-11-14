@@ -9,8 +9,12 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const secretMap = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
 const publishableMap = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
-const secretKey = secretMap.default as string | undefined;
-const allowedPublishableKeys = new Set(Object.values(publishableMap).filter((v): v is string => typeof v === "string"));
+const secretKey = (secretMap.default as string | undefined) ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const legacyAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+const allowedPublishableKeys = new Set([
+  ...Object.values(publishableMap).filter((v): v is string => typeof v === "string"),
+  ...(legacyAnonKey ? [legacyAnonKey] : []),
+]);
 
 if (!supabaseUrl || !secretKey || allowedPublishableKeys.size === 0) {
   throw new Error("PulseClass server configuration is incomplete.");
