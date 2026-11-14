@@ -12,7 +12,7 @@
 - [ ] Retention schedule and deletion workflow implemented
 - [ ] School privacy review / DPIA and consent or other lawful-basis process completed
 - [ ] Student-facing notice explains what is collected and who can see it
-- [ ] Device matrix tested (Android Chrome, desktop Chrome/Edge, iOS fallback)
+- [ ] Device matrix tested (native iOS app, native Android app, desktop Chrome/Edge browser fallback)
 - [ ] BLE disconnect, reconnect, timestamp gaps, and duplicate readings tested
 - [ ] Duration-in-zone derived from elapsed timestamp intervals with gap caps
 - [ ] CSV export reviewed for minimisation and safe handling
@@ -20,10 +20,10 @@
 
 
 ## Wearable / classroom pilot
-- [ ] WHOOP Heart Rate Broadcast enabled and tested over BLE on supported student browser
+- [ ] WHOOP Heart Rate Broadcast enabled and tested over BLE in the native student app on iOS and Android
 - [ ] Each intended Garmin watch model checked against Garmin's BLE broadcast list and tested
 - [ ] Chest straps confirmed to expose standard BLE Heart Rate Service (not ANT+ only)
-- [ ] Apple Watch / Fitbit clearly excluded from live browser pilot unless companion/provider integration is built
+- [ ] Apple Watch / Fitbit clearly excluded from this BLE pilot unless a separate HealthKit/provider integration is built
 - [ ] Test 3–5 devices, then full expected class size in the actual activity space
 - [ ] Verify stale-reading warning, manual reconnect, data attribution and saved report
 - [ ] Confirm school device policy allows Bluetooth permissions and HTTPS site access
@@ -40,3 +40,4 @@
 - [ ] Test WHOOP, each actual Garmin model, and each actual strap model separately.
 - [ ] Run a 20–30 phone, 20-minute Wi-Fi load test before normal lessons.
 - [ ] Verify no reading is accepted after a lesson ends and the server-side write guard rejects excessive writes.
+- [ ] Run the automated disposable-Postgres tests in `supabase/tests/` before reviewing the proposal for production.
