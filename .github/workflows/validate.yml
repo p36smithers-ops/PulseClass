@@ -23,9 +23,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Refresh mobile lockfile
+        working-directory: mobile
+        run: npm install --package-lock-only --ignore-scripts
       - name: Install mobile dependencies
         working-directory: mobile
-        run: npm install
+        run: npm ci
       - name: TypeScript check
         working-directory: mobile
         run: npm run typecheck
