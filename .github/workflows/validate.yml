@@ -52,3 +52,35 @@ jobs:
             git commit -m 'chore: lock mobile dependencies [skip ci]'
             git push origin HEAD:main
           fi
+  database-proposal-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pulseclass_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d pulseclass_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Create disposable audited-schema fixture
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d pulseclass_test -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/audited_live_schema.sql
+      - name: Apply proposed per-lesson schema to disposable database
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d pulseclass_test -v ON_ERROR_STOP=1 -f supabase/proposals/002_secure_per_lesson_students.sql
+      - name: Test token throttling, reading integrity, RLS and lesson revocation
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d pulseclass_test -v ON_ERROR_STOP=1 -f supabase/tests/per_lesson_students.sql
