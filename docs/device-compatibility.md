@@ -1,6 +1,26 @@
 # Device compatibility and student setup
 
-PulseClass v0.3 uses native Bluetooth LE on the student's phone and the standard Heart Rate Service rather than vendor cloud sync.
+PulseClass uses native Bluetooth LE on the student's phone and the Bluetooth SIG standard Heart Rate Service where a device exposes it. The student app now scans nearby named Bluetooth devices (rather than only devices that advertise the Heart Rate Service) and verifies the service after connection. This widens discovery, but it does not bypass a watch manufacturer's restrictions or make ANT+ devices visible to a phone without ANT+ radio support.
+
+## Compatibility principles
+
+- Prefer a direct, local Bluetooth connection for live lesson readings: it avoids vendor cloud delays and does not require a separate account.
+- Accept the standard Heart Rate Service (UUID `180D`) and Heart Rate Measurement characteristic (`2A37`).
+- Test exact watch/firmware/phone combinations; a brand name alone is not a compatibility guarantee.
+- Do not require students to purchase receivers, subscriptions or new watches. Provide a non-wearable participation option.
+- Keep live readings distinct from historical/synced health records.
+
+## Integration routes and their limits
+
+| Route | What it can add | Limitation |
+|---|---|---|
+| Standard Bluetooth LE | Broad range of chest straps and watches that expose the standard HR service | The device must make live HR available over BLE and allow the phone to connect |
+| Manufacturer broadcast mode | Some watches/bands can expose a standard BLE heart-rate stream when broadcast is enabled | Support varies by exact model; ANT+-only broadcast is not enough |
+| Android Health Connect | Potential later import of heart-rate records written by compatible apps | This is a permissioned health-data store, not a guaranteed continuous live sensor stream; it cannot be treated as live lesson telemetry |
+| Manufacturer cloud/API integration | May add selected brands or retrospective workout data | Requires vendor approval, user consent/OAuth, internet access and vendor-specific implementation; APIs may not provide continuous live HR |
+| ANT+ | Could support ANT+ sensors on devices with compatible radio hardware | No extra ANT+ receiver will be required for the core PulseClass experience; phones without ANT+ cannot receive ANT+ directly |
+
+WHOOP's developer documentation states that continuous heart-rate data is not available through its API; WHOOP devices instead support BLE heart-rate broadcast. Android Health Connect provides access to heart-rate records with user permission, but records may be synced or historical and should not be presented as a continuous live feed. See the official documentation linked from the project research notes in the repository issue tracker before implementing a vendor-specific integration.
 
 ## WHOOP
 
@@ -19,7 +39,7 @@ WHOOP support documentation describes the Heart Rate Broadcast control in Device
 3. Return to PulseClass Student and scan.
 4. Stop the watch broadcast after the lesson if desired.
 
-Many Garmin watches support broadcasting, but not all. Garmin says to verify the exact device and owner's manual. ANT+ broadcasting alone is not enough for this app.
+Some Garmin watches support Bluetooth heart-rate broadcasting, but support is model-specific. Check the exact model's official manual. ANT+-only broadcasting (including the vívoactive 4 broadcast mode) is not enough for direct phone BLE connection.
 
 ## Bluetooth chest strap
 
@@ -28,7 +48,7 @@ Many Garmin watches support broadcasting, but not all. Garmin says to verify the
 3. If it is already connected to a watch or training app, disconnect that receiver if the strap does not permit another connection.
 4. Scan in PulseClass Student and confirm a stable BPM display.
 
-The sensor must expose the Bluetooth SIG Heart Rate Service (UUID `180D`) and Heart Rate Measurement characteristic (`2A37`). A device advertised as ANT+ only, or a proprietary sensor with no standard HR service, will not work in this release.
+The sensor must expose the Bluetooth SIG Heart Rate Service (UUID `180D`) and Heart Rate Measurement characteristic (`2A37`). PulseClass now scans more broadly and checks these services after connection, but a proprietary sensor with no standard HR service, or a device advertised as ANT+ only, will not work through the direct BLE route.
 
 ## Mixed / unknown models
 
