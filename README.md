@@ -11,6 +11,7 @@ PulseClass is structured as a **single-teacher web dashboard + anonymous student
 - `supabase/schema.sql`: fresh-install database schema, authentication, roles, class codes, lessons, heart-rate readings and row-level security.
 - `supabase/migrations/002_native_student_app.sql`: earlier native-app migration.
 - `supabase/migrations/003_single_teacher_anonymous_students.sql`: archived v0.4 migration draft. It is **not approved for direct application**; see `docs/legacy-v04-review.md`.
+- Lesson reports summarise each student's average and peak BPM, time in all five estimated zones, and time/proportion in the lesson's target zone.
 - `docs/`: deployment, device compatibility and pilot acceptance guidance.
 
 ## Recommended classroom architecture
