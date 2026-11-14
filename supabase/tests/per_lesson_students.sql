@@ -39,7 +39,7 @@ end $$;
 
 -- A valid reading is inserted with the server-bound participant/session/class.
 select public.record_lesson_reading(
-  'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 145, 'CI heart-rate strap'
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 145::smallint, 'CI heart-rate strap'
 );
 do $$
 begin
@@ -62,7 +62,7 @@ do $$
 begin
   begin
     perform public.record_lesson_reading(
-      'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 146, 'CI heart-rate strap'
+      'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 146::smallint, 'CI heart-rate strap'
     );
     raise exception 'Expected sampling rate limit to reject an immediate second reading';
   exception when others then
