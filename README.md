@@ -153,4 +153,4 @@ Host the contents of `app/` as a static site on an HTTPS host (for example, Netl
 
 ## Repository notes
 
-The original v0.4 source archive has been unpacked into `app/`, `mobile/`, `supabase/`, and `docs/`. The root-level Expo scaffold is an additional prototype; the original intended product surfaces are the teacher website in `app/` and the student BLE companion in `mobile/`. Archived SQL files are retained for review only and have not been applied to the connected database.
+The original v0.4 source archive has been unpacked into `app/`, `mobile/`, `supabase/`, and `docs/`. The intended product surfaces are the teacher website in `app/` and the student BLE companion in `mobile/`. Archived SQL files are retained for review only and have not been applied to the connected database.
