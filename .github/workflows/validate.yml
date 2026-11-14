@@ -25,6 +25,8 @@ jobs:
       - name: TypeScript check
         working-directory: mobile
         run: npm run typecheck
+      - name: Check teacher website JavaScript syntax
+        run: node -e "const fs=require('node:fs'); const html=fs.readFileSync('app/index.html','utf8'); const scripts=[...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)]; if(!scripts.length) throw new Error('No inline script found'); for (const script of scripts) new Function(script[1]);"
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
@@ -34,7 +36,7 @@ jobs:
       - name: Commit generated dependency lockfile
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          if ! git diff --quiet -- mobile/package-lock.json; then
+          if [ -n "$(git status --porcelain -- mobile/package-lock.json)" ]; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add mobile/package-lock.json
