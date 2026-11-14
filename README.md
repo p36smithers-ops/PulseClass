@@ -118,7 +118,7 @@ Use 4–6 students first: at least one iPhone, one Android phone, one WHOOP, one
 
 ## v0.4 source package — integration and security review pending
 
-The target student identity is temporary and scoped to one active lesson. The teacher signs in with the single Supabase Auth account. Students do **not** sign up, sign in, or create Supabase Auth users: they enter a display name and class code, then the app creates a fresh random token for that lesson. The database stores only a SHA-256 hash. The `student-access` Edge Function validates join attempts and tokens, and uses a server-only database function to write readings into `participant_readings`; the teacher dashboard reads the roster and readings under teacher-only RLS policies.
+The target student identity is temporary and scoped to one active lesson. The teacher signs in with the single Supabase Auth account. Students do **not** sign up, sign in, or create Supabase Auth users: they enter a display name and class code, then the app creates a fresh random token for that lesson. The database stores only a SHA-256 hash. The `student-access` Edge Function source validates join attempts and tokens, and uses a server-only database function to write readings into `participant_readings`; the teacher dashboard reads the roster and readings under teacher-only RLS policies. These server components are committed source, not yet deployed to the connected Supabase project.
 
 ### Upgrade an existing Supabase project
 
@@ -142,7 +142,7 @@ Host the contents of `app/` as a static site on an HTTPS host (for example, Netl
 
 ### Important limitations and data protection
 
-- The student participant token is a bearer credential stored using device secure storage in the native app and session storage in the browser fallback. Do not share it. Server-side expiry and revocation still need to be implemented before real student data is collected.
+- The student participant token is a bearer credential stored using device secure storage in the native app and session storage in the browser fallback. Do not share it. Expiry, revocation, rate limiting and server-side reading validation are implemented in the proposed SQL and Edge Function source, but are not active until the migration and function are reviewed, tested and deployed.
 - Students can join any class if they know its code. Treat class codes as private and rotate/recreate classes if a code is shared beyond the class.
 - Existing student Auth users and legacy membership/readings are not deleted by this migration. They are retained to avoid destructive data loss; new student participation uses the anonymous participant tables. Delete legacy accounts/data only after reviewing retention obligations and explicitly approving that cleanup.
 - Native BLE collection is foreground-only. The app has not been tested with physical WHOOP/Garmin/chest-strap hardware or in a live classroom. Conduct a supervised pilot before relying on it.
