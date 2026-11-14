@@ -118,8 +118,8 @@ Deno.serve(async (req: Request) => {
       if (displayName.length < 1 || displayName.length > 60) {
         return json(400, { error: "Enter a name between 1 and 60 characters." });
       }
-      if (!/^[A-F0-9]{8,16}$/.test(joinCode)) {
-        return json(400, { error: "Check the class code and try again." });
+      if (!/^[0-9]{6}$/.test(joinCode)) {
+        return json(400, { error: "Enter the 6-digit class code and try again." });
       }
       if (!isToken(token)) return json(400, { error: "The device token is invalid." });
 
