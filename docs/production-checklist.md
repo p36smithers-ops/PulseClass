@@ -4,7 +4,10 @@
 - [ ] Schema applied and RLS tested with teacher and anonymous participant flows
 - [ ] Only the owner teacher profile retained; public signup blocked
 - [ ] Email confirmation, password reset, SMTP, and account recovery configured
-- [ ] Join-attempt rate limiting, secure class-code generation and session-scoped token expiry/revocation implemented
+- [ ] Reviewed proposal `supabase/proposals/002_secure_per_lesson_students.sql` tested and applied with explicit approval
+- [ ] `student-access` Edge Function deployed with `verify_jwt=false`, publishable-key validation and server-only secret key
+- [ ] Join-attempt rate limiting, secure 12-hex class codes and session-scoped token expiry/revocation verified
+- [ ] Token hashes and join-attempt hashes are not readable by anon/authenticated clients
 - [ ] Realtime publication verified for teacher dashboard reading anonymous participant data
 - [ ] Retention schedule and deletion workflow implemented
 - [ ] School privacy review / DPIA and consent or other lawful-basis process completed
