@@ -8,7 +8,7 @@ The current schema has `class_memberships.user_id -> profiles.id -> auth.users.i
 
 ## Proposed model
 
-Add a private `lesson_participants` table:
+Add a `public.lesson_participants` table with RLS enabled and explicit grants revoked from `anon` and `authenticated`; only `service_role` receives table privileges:
 - `id uuid primary key default gen_random_uuid()`
 - `session_id uuid not null references sessions(id) on delete cascade`
 - `class_id uuid not null references classes(id) on delete cascade`
@@ -20,7 +20,7 @@ Add a private `lesson_participants` table:
 
 Add a nullable `participant_id uuid references lesson_participants(id)` to `heart_rate_readings`. Keep existing `user_id` values intact, but allow it to be null for temporary participants and add a check requiring exactly one identity path: authenticated `user_id` OR temporary `participant_id`. Existing historical readings remain associated with `user_id`.
 
-Keep `lesson_participants` out of public client access. Only trusted server-side code should read or write it.
+Keep `lesson_participants` inaccessible to public client roles despite its `public` schema location. Only trusted server-side code should read or write it.
 
 ## Join endpoint behaviour
 
