@@ -5,13 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
-concurrency:
-  group: pulseclass-validation-${{ github.ref }}
-  cancel-in-progress: false
 
 jobs:
   typecheck:
