@@ -8,7 +8,7 @@ The current schema has `class_memberships.user_id -> profiles.id -> auth.users.i
 
 ## Proposed model
 
-Use a `public.lesson_participants` table with one row per student per lesson. Enable RLS, revoke all access from `anon` and `authenticated`, and allow only trusted server-side code to create/update participant tokens. Give the authenticated teacher read-only access to the sanitized participant names through a teacher-only policy.
+Use a `public.lesson_participants` table with one row per student per lesson. Enable RLS, revoke all access from `anon`, and revoke all write access from `authenticated`. Give the authenticated teacher read-only access to non-secret participant columns through a teacher-only policy. Only trusted server-side code may read or write token hashes.
 - `id uuid primary key default gen_random_uuid()`
 - `session_id uuid not null references sessions(id) on delete cascade` (the participant belongs to exactly one lesson)
 - `class_id uuid not null references classes(id) on delete cascade`
