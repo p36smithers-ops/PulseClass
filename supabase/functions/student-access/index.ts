@@ -211,13 +211,12 @@ Deno.serve(async (req: Request) => {
       if (!participant || !session) {
         return json(410, { error: "This lesson connection has ended. Join again when your teacher opens a new lesson." });
       }
-      const now = new Date().toISOString();
-      const [{ data: classRow, error: classError }, { error: updateError }] = await Promise.all([
-        admin.from("classes").select("name").eq("id", participant.class_id).single(),
-        admin.from("lesson_participants").update({ last_seen_at: now }).eq("id", participant.id),
-      ]);
+      const { data: classRow, error: classError } = await admin
+        .from("classes")
+        .select("name")
+        .eq("id", participant.class_id)
+        .single();
       if (classError) throw classError;
-      if (updateError) throw updateError;
       return json(200, {
         participant_id: participant.id,
         display_name: participant.display_name,
