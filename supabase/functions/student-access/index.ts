@@ -124,8 +124,8 @@ Deno.serve(async (req: Request) => {
       if (!isToken(token)) return json(400, { error: "The device token is invalid." });
 
       // Supabase normally supplies a forwarded client IP. If it is absent,
-      // use one shared fallback bucket rather than blocking every student.
-      const ip = clientIp(req) ?? "unavailable";
+      // rate-limit per class code so unrelated classes do not share one bucket.
+      const ip = clientIp(req) ?? `unavailable:${joinCode}`;
       const ipHash = await hmac(ip);
       const { data: allowed, error: limitError } = await admin.rpc("consume_join_attempt", {
         p_ip_hash: ipHash,
