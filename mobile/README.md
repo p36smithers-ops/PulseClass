@@ -5,7 +5,7 @@ Native iOS and Android anonymous student sensor collector. The teacher dashboard
 ## Local setup
 
 1. Install Node.js LTS.
-2. Copy `.env.example` to `.env` and add the Supabase URL and public anon/publishable key. Apply database migration `003_single_teacher_anonymous_students.sql`.
+2. Copy `.env.example` to `.env` and add the Supabase URL and public anon/publishable key. Do not apply archived migration 003 until the live-schema compatibility and security review in `../docs/legacy-v04-review.md` is complete.
 3. Run `npm install`.
 4. Run `npm run typecheck`. For EAS builds, run `eas build:configure` once, then `eas build --profile preview --platform android` and/or `eas build --profile preview --platform ios`.
 5. For signed internal distribution, configure EAS as described in the root README.
