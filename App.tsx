@@ -6,6 +6,7 @@ import {
 import { supabase, isSupabaseConfigured } from './src/lib/supabase';
 import { signInTeacher, signOutTeacher } from './src/services/teacherAuth';
 import { createTeacherClass, listTeacherClasses, type ClassRecord } from './src/services/classes';
+import { endLessonSession, getActiveLessonSession, startLessonSession, type LessonSession } from './src/services/sessions';
 
 type Screen = 'home' | 'classes' | 'monitor' | 'join';
 
@@ -37,11 +38,14 @@ export default function App() {
   const [joinCode, setJoinCode] = useState('');
   const [notice, setNotice] = useState('');
   const [classes, setClasses] = useState<ClassRecord[]>([]);
+  const [activeSession, setActiveSession] = useState<LessonSession | null>(null);
 
   async function refreshClasses() {
     try {
       const rows = await listTeacherClasses();
       setClasses(rows);
+      if (rows[0]) setActiveSession(await getActiveLessonSession(rows[0].id));
+      else setActiveSession(null);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Could not load your classes.');
     }
@@ -78,6 +82,24 @@ export default function App() {
   }
 
   const activeClass = useMemo(() => classes[0], [classes]);
+
+  async function handleToggleSession() {
+    if (!activeClass) { setNotice('Create a class before starting a lesson.'); return; }
+    setBusy(true); setNotice('');
+    try {
+      if (activeSession) {
+        await endLessonSession(activeSession.id);
+        setActiveSession(null);
+        setNotice('Lesson ended and saved.');
+      } else {
+        const session = await startLessonSession(activeClass.id);
+        setActiveSession(session);
+        setNotice('Lesson started. Students will be able to join once secure student access is enabled.');
+      }
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not update the lesson.');
+    } finally { setBusy(false); }
+  }
 
   async function addClass() {
     const name = className.trim();
@@ -120,7 +142,7 @@ export default function App() {
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {authLoading ? <View style={styles.authCard}><ActivityIndicator color={palette.green} /><Text style={styles.authHelp}>Checking your secure teacher session…</Text></View> : !isSupabaseConfigured ? <View style={styles.authCard}><Text style={styles.eyebrow}>SETUP REQUIRED</Text><Text style={styles.heading}>Connect PulseClass.</Text><Text style={styles.subheading}>The app screens are ready, but the Supabase project URL and publishable key still need to be added to the app environment before sign-in can work.</Text></View> : !teacherReady ? <View style={styles.authCard}><View style={styles.joinMark}><Text style={styles.joinMarkText}>♥</Text></View><Text style={styles.eyebrow}>TEACHER ACCESS</Text><Text style={styles.heading}>Welcome back.</Text><Text style={styles.subheading}>Sign in with your teacher account to manage classes and lessons.</Text><Text style={styles.fieldLabel}>EMAIL ADDRESS</Text><TextInput value={email} onChangeText={setEmail} placeholder="Teacher email" placeholderTextColor="#9AA69F" style={styles.input} autoCapitalize="none" keyboardType="email-address" /><Text style={styles.fieldLabel}>PASSWORD</Text><TextInput value={password} onChangeText={setPassword} placeholder="Password" placeholderTextColor="#9AA69F" style={styles.input} secureTextEntry /><TouchableOpacity style={styles.primaryButton} onPress={handleSignIn} disabled={busy}><Text style={styles.primaryButtonText}>{busy ? 'Signing in…' : 'Sign in securely  →'}</Text></TouchableOpacity><Text style={styles.privacyNote}>Student accounts are not needed. The teacher account is created separately in Supabase.</Text></View> : <>
+          {authLoading ? <View style={styles.authCard}><ActivityIndicator color={palette.green} /><Text style={styles.authHelp}>Checking your secure teacher session…</Text></View> : !isSupabaseConfigured ? <View style={styles.authCard}><Text style={styles.eyebrow}>SETUP REQUIRED</Text><Text style={styles.heading}>Connect PulseClass.</Text><Text style={styles.subheading}>The app screens are ready, but the Supabase project URL and publishable key still need to be added to the app environment before sign-in can work.</Text></View> : !teacherReady && screen !== 'join' ? <View style={styles.authCard}><View style={styles.joinMark}><Text style={styles.joinMarkText}>♥</Text></View><Text style={styles.eyebrow}>TEACHER ACCESS</Text><Text style={styles.heading}>Welcome back.</Text><Text style={styles.subheading}>Sign in with your teacher account to manage classes and lessons.</Text><Text style={styles.fieldLabel}>EMAIL ADDRESS</Text><TextInput value={email} onChangeText={setEmail} placeholder="Teacher email" placeholderTextColor="#9AA69F" style={styles.input} autoCapitalize="none" keyboardType="email-address" /><Text style={styles.fieldLabel}>PASSWORD</Text><TextInput value={password} onChangeText={setPassword} placeholder="Password" placeholderTextColor="#9AA69F" style={styles.input} secureTextEntry /><TouchableOpacity style={styles.primaryButton} onPress={handleSignIn} disabled={busy}><Text style={styles.primaryButtonText}>{busy ? 'Signing in…' : 'Sign in securely  →'}</Text></TouchableOpacity><Text style={styles.privacyNote}>Student accounts are not needed. The teacher account is created separately in Supabase.</Text><TouchableOpacity style={styles.studentEntry} onPress={() => { setScreen('join'); setNotice(''); }}><Text style={styles.studentEntryTitle}>Are you a student?</Text><Text style={styles.studentEntryCopy}>Join a lesson with your name and class code →</Text></TouchableOpacity></View> : <>
           {screen === 'home' && <>
             <Text style={styles.eyebrow}>TEACHER WORKSPACE</Text>
             <Text style={styles.heading}>Good to see you.</Text>
@@ -174,11 +196,11 @@ export default function App() {
             <Text style={styles.eyebrow}>CLASSROOM • SESSION</Text><Text style={styles.heading}>Live lesson</Text>
             <Text style={styles.subheading}>A clear view of class activity while your lesson is running.</Text>
             <View style={styles.livePanel}>
-              <View style={styles.liveTop}><Pill tone="amber">NOT STARTED</Pill><Text style={styles.liveDate}>SESSION PREVIEW</Text></View>
+              <View style={styles.liveTop}><Pill tone={activeSession ? 'green' : 'amber'}>{activeSession ? 'IN PROGRESS' : 'NOT STARTED'}</Pill><Text style={styles.liveDate}>{activeSession ? 'LESSON ACTIVE' : 'READY TO START'}</Text></View>
               <Text style={styles.liveTitle}>{activeClass?.name ?? 'Choose a class'}</Text>
-              <Text style={styles.liveDescription}>Your live class view will appear here once a session is connected.</Text>
+              <Text style={styles.liveDescription}>{activeSession ? `Started ${new Date(activeSession.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Session is saved to your class record.` : 'Start a lesson to create a session record for this class.'}</Text>
               <View style={styles.liveStats}><View><Text style={styles.liveNumber}>—</Text><Text style={styles.liveLabel}>AVG. HEART RATE</Text></View><View><Text style={styles.liveNumber}>0</Text><Text style={styles.liveLabel}>CONNECTED</Text></View><View><Text style={styles.liveNumber}>—</Text><Text style={styles.liveLabel}>DURATION</Text></View></View>
-              <TouchableOpacity style={styles.primaryButton} onPress={() => setNotice('Session controls will be connected after the secure database and student-join flow are implemented.')}><Text style={styles.primaryButtonText}>Start session (coming next)</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.primaryButton} onPress={handleToggleSession} disabled={busy || !activeClass}><Text style={styles.primaryButtonText}>{busy ? 'Saving…' : activeSession ? 'End lesson and save' : 'Start lesson'}</Text></TouchableOpacity>
             </View>
             <View style={styles.infoCard}><Text style={styles.infoTitle}>Heart-rate monitoring</Text><Text style={styles.infoCopy}>The next build stage will connect validated student readings, class averages and live updates. No readings are being collected in this preview.</Text></View>
           </>}
@@ -194,7 +216,7 @@ export default function App() {
               <Text style={styles.fieldLabel}>CLASS CODE</Text>
               <TextInput value={joinCode} onChangeText={setJoinCode} placeholder="e.g. BIO10A" placeholderTextColor="#9AA69F" style={styles.input} autoCapitalize="characters" />
               <TouchableOpacity style={styles.primaryButton} onPress={joinLesson}><Text style={styles.primaryButtonText}>Join lesson  →</Text></TouchableOpacity>
-              <Text style={styles.privacyNote}>No student password required. Secure, temporary lesson access will be added in the next stage.</Text>
+              <Text style={styles.privacyNote}>No student password required. Secure, temporary lesson access will be added in the next stage.</Text><TouchableOpacity onPress={() => { setScreen('home'); setNotice(''); }}><Text style={styles.link}>Teacher sign in</Text></TouchableOpacity>
             </View>
           </>}
 
