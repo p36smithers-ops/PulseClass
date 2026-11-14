@@ -11,7 +11,7 @@
 ## Implemented in this scaffold
 
 - Recovered v0.4 teacher website (`app/index.html`) and native BLE student app (`mobile/`).
-- Expo / React Native TypeScript prototype scaffold at the repository root.
+- Expo / React Native TypeScript native student app in `mobile/`.
 - Teacher sign-in screen using Supabase Auth.
 - Mobile session persistence through Expo SecureStore.
 - Teacher class listing scoped to the signed-in teacher.
