@@ -10,6 +10,10 @@ This folder documents the application-side Supabase setup. The connected project
 - `heart_rate_readings` are linked to sessions, classes and profiles.
 - `class_memberships` currently references profiles and therefore does not support the intended no-student-auth workflow by itself.
 
+## Recovered v0.4 source review
+
+The original ZIP has been unpacked into `app/`, `mobile/`, `supabase/` and `docs/`. The archived migration 003 is retained as source, not approved for direct use. It expects `sessions.lesson_title`, `target_zone` and `planned_duration_minutes`, which are not present in the connected live database. It also lacks token expiry/revocation and join-code rate limiting. See `docs/legacy-v04-review.md`.
+
 ## Current app integration
 
 - The mobile client uses the publishable/anon key only.
@@ -29,4 +33,4 @@ The current heart-rate INSERT policy contains a tautological session/class compa
 
 ## Deployment status
 
-No production migrations, Edge Functions, account provisioning or policy changes have been performed by this scaffold.
+No production migrations, Edge Functions, account provisioning or policy changes have been performed. The live project remains unchanged.
