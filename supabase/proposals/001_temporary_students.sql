@@ -2,15 +2,11 @@
 -- Review and test against a disposable copy of the live schema first.
 begin;
 
-create schema if not exists private;
-revoke all on schema private from public, anon, authenticated;
-grant usage on schema private to service_role;
-
 -- Ensure a participant's session and class are a valid pair.
 alter table public.sessions
   add constraint sessions_id_class_id_key unique (id, class_id);
 
-create table private.lesson_participants (
+create table public.lesson_participants (
   id uuid primary key default gen_random_uuid(),
   session_id uuid not null,
   class_id uuid not null,
@@ -87,5 +83,5 @@ create policy "students insert own session readings"
 
 commit;
 
--- Edge Functions must use the server-side secret key and private schema.
+-- Edge Functions must use the server-side secret key to access this table.
 -- Never expose the token_hash table or a secret key to the mobile client.
