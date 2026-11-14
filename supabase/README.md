@@ -17,7 +17,8 @@ The original ZIP has been unpacked into `app/`, `mobile/`, `supabase/` and `docs
 ## Current app integration
 
 - The mobile client uses the publishable/anon key only.
-- Teacher authentication uses email/password and persists sessions using Expo SecureStore.
+- Teacher authentication uses email/password in the browser dashboard.
+- The native student app stores its anonymous participant token using Expo SecureStore.
 - Class listing uses the existing RLS policies.
 - Class creation calls the existing `create_class(p_name)` RPC.
 
