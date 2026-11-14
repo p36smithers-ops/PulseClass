@@ -59,7 +59,7 @@ export default function App() {
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setTeacherReady(Boolean(session));
-      if (session) void refreshClasses();
+      if (session) Promise.resolve().then(() => refreshClasses());
       else setClasses([]);
     });
     return () => { alive = false; listener.subscription.unsubscribe(); };
@@ -139,7 +139,7 @@ export default function App() {
             <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>At a glance</Text><Text style={styles.sectionHint}>YOUR OVERVIEW</Text></View>
             <View style={styles.metricsRow}>
               <Metric label="CLASSES" value={String(classes.length)} note="Created" />
-              <Metric label="STUDENTS" value={String(classes.reduce((sum, item) => sum + item.students, 0))} note="Across classes" />
+              <Metric label="STUDENTS" value="—" note="Not joined yet" />
               <Metric label="SESSIONS" value="0" note="This week" />
             </View>
             <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Your classes</Text><TouchableOpacity onPress={() => setScreen('classes')}><Text style={styles.link}>View all →</Text></TouchableOpacity></View>
