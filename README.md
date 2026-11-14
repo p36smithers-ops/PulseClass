@@ -56,7 +56,7 @@ Web Bluetooth is not available in iOS Safari and browser support is not universa
    select id, full_name, role from public.profiles where role = 'teacher';
    ```
 
-   If no teacher profile exists yet, create the first Auth user from the private Supabase Dashboard before publishing the site; the trigger assigns that first account the teacher role. Existing legacy student accounts are not deleted by the migration, to avoid destructive data loss. New student participation uses `class_participants` and `participant_readings`.
+   The connected project currently has no Auth users. Create the single teacher account only after the reviewed bootstrap migration is approved. The new per-lesson design uses `lesson_participants` and `participant_readings`; the archived `class_participants` model is retained for reference only.
 
 ### B. Deploy the teacher website
 
