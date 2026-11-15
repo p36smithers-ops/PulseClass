@@ -151,9 +151,14 @@ function openJoinQR(){
  const url=studentJoinUrl(activeClass.join_code);
  new QRCode($('joinqrlarge'),{text:url,width:400,height:400,colorDark:'#102039',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
  msg('joinqrmodalcode',activeClass.join_code);msg('joinqrmodalurl',url);
- $('joinqrmodal').classList.add('open');$('closejoinqr').focus();
+ $('joinqrmodal').classList.add('open');$('joinqrmodal').setAttribute('aria-hidden','false');$('closejoinqr').focus();
 }
-function closeJoinQR(){$('joinqrmodal').classList.remove('open')}
+function closeJoinQR(){
+ const modal=$('joinqrmodal');
+ modal.classList.remove('open');
+ modal.setAttribute('aria-hidden','true');
+ $('showjoinqr').focus();
+}
 function msg(id,t){$(id).textContent=t}
 function show(id,on=true){$(id).classList.toggle('hidden',!on)}
 function maxHR(age){return Math.round(208-.7*age)}
@@ -175,8 +180,10 @@ async function subscribeClass(){if(channel)await sb.removeChannel(channel);if(!a
 $('refresh').onclick=()=>activeClass&&selectClass(activeClass.id);
 $('copycode').onclick=()=>{if(!activeClass)return; navigator.clipboard?.writeText(activeClass.join_code).then(()=>msg('joincode','Class code copied: '+activeClass.join_code)).catch(()=>msg('joincode','Share this class code: '+activeClass.join_code))};
 $('showjoinqr').onclick=openJoinQR;
-$('closejoinqr').onclick=closeJoinQR;
-$('joinqrmodal').onclick=e=>{if(e.target===$('joinqrmodal'))closeJoinQR()};
+$('closejoinqr').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeJoinQR()});
+$('joinqrmodal').addEventListener('click',e=>{if(e.target===$('joinqrmodal'))closeJoinQR()});
+$('joinqrmodal').addEventListener('pointerup',e=>{if(e.target.closest&&e.target.closest('#closejoinqr')){e.preventDefault();closeJoinQR()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('joinqrmodal').classList.contains('open'))closeJoinQR()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeJoinQR()});
 async function loadSessions(){let {data,error}=await sb.from('sessions').select('*').eq('class_id',activeClass.id).order('started_at',{ascending:false});if(error)return;let opts=data||[];activeSession=opts.find(s=>!s.ended_at)||null;$('sessionselect').innerHTML=opts.map(s=>'<option value="'+s.id+'">'+esc(s.lesson_title||'Sports science lesson')+' · '+new Date(s.started_at).toLocaleString()+(s.ended_at?' · completed':' · live')+'</option>').join('');updateLessonUI();}
 $('startsession').onclick=async()=>{if(!activeClass)return alert('Create or select a class first.');if(activeSession)return alert('A lesson is already open for this class. End it before opening another.');let title=prompt('Lesson title (e.g. Interval training — aerobic zone focus)','Sports science lesson');if(!title)return;let target=Number(prompt('Target heart-rate zone (1–5)','3'));if(!Number.isInteger(target)||target<1||target>5)return alert('Choose a zone from 1 to 5.');let mins=Number(prompt('Planned lesson duration in minutes','30'));if(!Number.isFinite(mins)||mins<1||mins>240)return alert('Enter a duration from 1 to 240 minutes.');let {data,error}=await sb.from('sessions').insert({class_id:activeClass.id,created_by:user.id,lesson_title:title.trim(),target_zone:target,planned_duration_minutes:mins}).select().single();if(error)return alert(error.message);activeSession=data;latest={};await loadSessions();await subscribeClass();await renderLive();alert('Lesson opened. Share the class code with students; they can now send heart-rate readings.')};
