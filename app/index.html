@@ -117,6 +117,24 @@ button:active{transform:translateY(1px)}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* Final classroom-display refinement: keep student cards spacious at every screen size. */
+@media(min-width:1450px){
+ #teacherpanel .live-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+ #teacherpanel .student{min-height:145px;padding:15px}
+}
+@media(max-width:420px){
+ #teacherpanel>.grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #teacherpanel .metric{padding:10px}
+ #teacherpanel .metric strong{font-size:22px}
+ #teacherpanel .live-grid{grid-template-columns:1fr}
+ #teacherpanel .student{min-height:112px}
+ #teacherpanel .dashboard-heading{align-items:flex-start;flex-wrap:wrap}
+ #teacherpanel .dashboard-clock{font-size:26px}
+}
+.projector-mode #teacherpanel .student{border:1px solid #ffffff55;box-shadow:0 7px 18px #0004}
+.projector-mode #teacherpanel .student .student-name{font-size:15px}
+.projector-mode #teacherpanel .student .student-meta{font-size:11px}
 </style></head>
 <body>
 <div class="wrap">
