@@ -87,4 +87,5 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h 127.0.0.1 -U postgres -d pulseclass_test -v ON_ERROR_STOP=1 -f supabase/proposals/003_six_digit_join_codes.sql
-          psql -h 127.0.0.1 -U postgres -d pulseclass_test -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF EXISTS (SELECT 1 FROM public.classes WHERE join_code !~ '^[0-9]{6}) THEN RAISE EXCEPTION 'Class join code is not exactly six digits'; END IF; END \$\$;"
+          psql -h 127.0.0.1 -U postgres -d pulseclass_test -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF EXISTS (SELECT 1 FROM public.classes WHERE join_code !~ '^[0-9]{6} THEN RAISE EXCEPTION 'Class join code is not exactly six digits'; END IF; END \$\$;"
+) THEN RAISE EXCEPTION 'Class join code is not exactly six digits'; END IF; END \$\$;"
