@@ -91,6 +91,32 @@ body{background:#081321;color:#f5f8fc;letter-spacing:.005em}
 #teacherpanel .student.zone-2{background:linear-gradient(145deg,#9a7917,#d8b83e)}
 #teacherpanel .student.zone-3{background:linear-gradient(145deg,#a34d1e,#ed8738)}
 #teacherpanel .student.zone-4{background:linear-gradient(145deg,#a72d3d,#e34d5b)}
+
+/* Accessibility and touch-friendly interface polish */
+button,input,select{accent-color:#6ea5ff}
+button{min-height:40px;transition:filter .16s ease,transform .16s ease,box-shadow .16s ease}
+button:hover{filter:brightness(1.08)}
+button:active{transform:translateY(1px)}
+:where(button,input,select,a,[tabindex]):focus-visible{outline:3px solid #8dbaff;outline-offset:3px}
+#joinqrmodal{overflow-y:auto;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+#joinqrmodal .qr-panel{max-height:calc(100dvh - 36px);overflow-y:auto}
+#joinqrlarge canvas,#joinqrlarge img{width:min(400px,70vw);height:auto}
+@media(max-width:650px){
+ .wrap{padding:12px}
+ #teacher-toolbar{padding:16px;gap:14px}
+ #teacher-toolbar #pagetitle{font-size:22px}
+ #teacheractions{gap:8px}
+ #teacheractions button{min-height:44px;padding:10px}
+ #teacherpanel>.grid{gap:8px}
+ #teacherpanel .metric{padding:12px}
+ #teacherpanel .metric strong{font-size:25px}
+ #teacherpanel .student{padding:10px;min-height:126px}
+ #teacherpanel .student .student-bpm{font-size:29px}
+ #joinqrmodal .qr-panel{padding:18px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
 </style></head>
 <body>
 <div class="wrap">
