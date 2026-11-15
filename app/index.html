@@ -85,6 +85,13 @@ body{background:#081321;color:#f5f8fc;letter-spacing:.005em}
 #joinqrmodal .qr-url{font-size:clamp(12px,1.6vw,17px);overflow-wrap:anywhere;color:#52627a;margin:0 auto 18px;max-width:620px}
 #joinqrmodal button{font-size:16px;padding:13px 24px}
 @media(max-width:600px){#joinqrmodal{padding:10px}#joinqrmodal .qr-stage{padding:18px 12px;border-radius:16px}#joinqrlarge{width:min(78vw,340px);height:min(78vw,340px)}}
+
+/* Live zone colours: keep these more specific than the dashboard's generic student-card rule. */
+#teacherpanel .student.zone-0{background:linear-gradient(145deg,#167c9b,#25a8c0)}
+#teacherpanel .student.zone-1{background:linear-gradient(145deg,#16895d,#28b979)}
+#teacherpanel .student.zone-2{background:linear-gradient(145deg,#9a7917,#d8b83e)}
+#teacherpanel .student.zone-3{background:linear-gradient(145deg,#a34d1e,#ed8738)}
+#teacherpanel .student.zone-4{background:linear-gradient(145deg,#a72d3d,#e34d5b)}
 </style></head>
 <body>
 <div class="wrap">
@@ -127,7 +134,7 @@ body{background:#081321;color:#f5f8fc;letter-spacing:.005em}
 const DEFAULT_SUPABASE_URL='https://zkijghkgbakmfxyglynd.supabase.co';
 const DEFAULT_SUPABASE_KEY='sb_publishable_MfAl_0CIWj8FVLuQyVvRrg_U1mb0fRq';
 const $=id=>document.getElementById(id);$('sburl').value=localStorage.getItem('pulseclass_supabase_url')||DEFAULT_SUPABASE_URL;$('sbkey').value=localStorage.getItem('pulseclass_supabase_key')||DEFAULT_SUPABASE_KEY;let sb=null,user=null,profile=null,classes=[],activeClass=null,activeSession=null,channel=null,ble=null,bleChar=null,lastHR=null,lastHRAt=0,latest={},reportRows=[],lastSentAt=0,lessonTimer=null,membershipTimer=null;
-const zcols=['#60a5fa','#34c78a','#e9b949','#f28b45','#e35d6a'],znames=['Recovery','Aerobic','Tempo','Threshold','Maximum'];let zoneFilter=-1,hideStudentNames=false;
+const zcols=['#60a5fa','#34c78a','#e9b949','#f28b45','#e35d6a'],znames=['Recovery','Aerobic','Moderate','Hard','Very hard'];let zoneFilter=-1,hideStudentNames=false;
 function msg(id,t){$(id).textContent=t}
 function renderStudentQR(code){const box=$('studentqr');if(!box)return;box.innerHTML='';const url=new URL('https://p36smithers-ops.github.io/student.pulseclass/');if(code)url.searchParams.set('join',code);const target=url.toString();$('studentqrurl').textContent=target;if(window.QRCode)new QRCode(box,{text:target,width:176,height:176,colorDark:'#101a2d',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});else box.textContent='QR code library unavailable. Share the website address and class code instead.';}
 function openJoinQR(){if(!activeClass)return alert('Select or create a class first.');const url=new URL('https://p36smithers-ops.github.io/student.pulseclass/');url.searchParams.set('join',activeClass.join_code);const target=url.toString();$('joinqrlarge').innerHTML='';$('joinqrmodalcode').textContent=activeClass.join_code;$('joinqrmodalurl').textContent=target;if(window.QRCode)new QRCode($('joinqrlarge'),{text:target,width:440,height:440,colorDark:'#101a2d',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});else $('joinqrlarge').textContent='QR code library unavailable. Share the class code: '+activeClass.join_code;$('joinqrmodal').classList.add('open');$('closejoinqr').focus();}
